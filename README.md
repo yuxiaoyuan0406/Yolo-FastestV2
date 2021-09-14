@@ -1,10 +1,14 @@
 # :zap:Yolo-FastestV2:zap:[![DOI](https://zenodo.org/badge/386585431.svg)](https://zenodo.org/badge/latestdoi/386585431)
+
 ![image](https://github.com/dog-qiuqiu/Yolo-FastestV2/blob/main/img/demo.png)
+
 * ***Simple, fast, compact, easy to transplant***
 * ***Less resource occupation, excellent single-core performance, lower power consumption***
 * ***Faster and smaller:Trade 0.3% loss of accuracy for 30% increase in inference speed, reducing the amount of parameters by 25%***
 * ***Fast training speed, low computing power requirements, training only requires 3GB video memory, gtx1660ti training COCO 1 epoch only takes 4 minutes***
+
 # Evaluating indicator/Benchmark
+
 Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Params(M)
 :---:|:---:|:---:|:---:|:---:|:---:|:---:
 [Yolo-FastestV2](https://github.com/dog-qiuqiu/Yolo-FastestV2/tree/main/modelzoo)|24.10 %|352X352|3.29 ms|5.37 ms|0.212|0.25M
@@ -12,34 +16,55 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
 [Yolov4-Tiny](https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4-tiny.cfg)|40.2%|416X416|26.00ms|55.44ms|6.9|5.77M
 
 * ***Test platform Mate 30 Kirin 990 CPU，Based on [NCNN](https://github.com/Tencent/ncnn)***
+
 # Improvement
+
 * Different loss weights for different scale output layers
 * The backbone is replaced with a more lightweight shufflenetV2
 * Anchor matching mechanism and loss are replaced by YoloV5, and the classification loss is replaced by softmax cross entropy from sigmoid
 * Decouple the detection head, distinguish obj (foreground background classification), cls (category classification), reg (detection frame regression) 3 branches,  
+
 # How to use
+
 ## Dependent installation
-  * PIP
-  ```
+
+ * PIP
+
+  ```bash
   pip3 install -r requirements.txt
   ```
+
 ## Test
-* Picture test
+
+ * Picture test
+
+  ```bash
+  python test.py --data data/coco.data --weights modelzoo/coco2017-0.241078ap-model.pth --img img/000139.jpg
   ```
-  python3 test.py --data data/coco.data --weights modelzoo/coco2017-0.241078ap-model.pth --img img/000139.jpg
+  
+ * Camera test
+
+  ```bash
+  python cam_test.py --data data/coco.data --weights modelzoo/coco2017-0.241078ap-model.pth
   ```
+
 <div align=center>
-<img src="https://github.com/dog-qiuqiu/Yolo-FastestV2/blob/main/img/000139_result.png"> />
+<img src="https://github.com/dog-qiuqiu/Yolo-FastestV2/blob/main/img/000139_result.png">
 </div>
 
 ## How to train
+
 ### Building data sets(The dataset is constructed in the same way as darknet yolo)
+
 * The format of the data set is the same as that of Darknet Yolo, Each image corresponds to a .txt label file. The label format is also based on Darknet Yolo's data set label format: "category cx cy wh", where category is the category subscript, cx, cy are the coordinates of the center point of the normalized label box, and w, h are the normalized label box The width and height, .txt label file content example as follows:
+
   ```
   11 0.344192634561 0.611 0.416430594901 0.262
   14 0.509915014164 0.51 0.974504249292 0.972
   ```
+
 * The image and its corresponding label file have the same name and are stored in the same directory. The data file structure is as follows:
+
   ```
   .
   ├── train
@@ -57,23 +82,29 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
       ├── 000070.jpg
       └── 000070.txt
   ```
+
 * Generate a dataset path .txt file, the example content is as follows：
   
   train.txt
+
   ```
   /home/qiuqiu/Desktop/dataset/train/000001.jpg
   /home/qiuqiu/Desktop/dataset/train/000002.jpg
   /home/qiuqiu/Desktop/dataset/train/000003.jpg
   ```
+
   val.txt
+
   ```
   /home/qiuqiu/Desktop/dataset/val/000070.jpg
   /home/qiuqiu/Desktop/dataset/val/000043.jpg
   /home/qiuqiu/Desktop/dataset/val/000057.jpg
   ```
+
 * Generate the .names category label file, the sample content is as follows:
  
   category.names
+
   ```
   person
   bicycle
@@ -82,7 +113,9 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
   ...
   
   ```
+
 * The directory structure of the finally constructed training data set is as follows:
+
   ```
   .
   ├── category.names        # .names category label file
@@ -104,18 +137,26 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
   └── val.txt                # val dataset path .txt file
 
   ```
+
 ### Get anchor bias
+
 * Generate anchor based on current dataset
+
   ```
   python3 genanchors.py --traintxt ./train.txt
   ```
+
 * The anchors6.txt file will be generated in the current directory,the sample content of the anchors6.txt is as follows:
+
   ```
   12.64,19.39, 37.88,51.48, 55.71,138.31, 126.91,78.23, 131.57,214.55, 279.92,258.87  # anchor bias
   0.636158                                                                             # iou
   ```
+
 ### Build the training .data configuration file
+
 * Reference./data/coco.data
+
   ```
   [name]
   model_name=coco           # model name
@@ -140,23 +181,35 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
   val=/media/qiuqiu/D/coco/val2017.txt       # val dataset path .txt file 
   names=./data/coco.names                    # .names category label file
   ```
+
 ### Train
+
 * Perform training tasks
-  ```
+
+  ```bash
   python3 train.py --data data/coco.data
   ```
+
 ### Evaluation
+
 * Calculate map evaluation
-  ```
+
+  ```bash
   python3 evaluation.py --data data/coco.data --weights modelzoo/coco2017-0.241078ap-model.pth
   ```
+
 # Deploy
+
 ## NCNN
+
 * Convert onnx
-  ```
+
+  ```bash
   python3 pytorch2onnx.py --data data/coco.data --weights modelzoo/coco2017-0.241078ap-model.pth
   ```
+
 # Reference
+
 * https://github.com/Tencent/ncnn
 * https://github.com/AlexeyAB/darknet
 * https://github.com/ultralytics/yolov5
