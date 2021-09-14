@@ -4,3 +4,12 @@ utils/__pycache__
 weights
 data/voc.data
 data/voc.names
+
+# vscode settings
+.vscode
+
+# trace
+*.pt
+
+# cpp
+build
