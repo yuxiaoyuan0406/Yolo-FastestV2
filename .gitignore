@@ -13,3 +13,6 @@ data/voc.names
 
 # cpp
 build
+
+# images
+test_result.png
