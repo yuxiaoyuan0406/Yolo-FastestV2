@@ -1,3 +1,4 @@
+from cv2 import data
 from pycocotools.coco import COCO
 import numpy as np
 import skimage.io as io
@@ -8,7 +9,7 @@ import os
 
 dataDir = os.environ['COCO2017']
 dataType = 'train2017'
-annFile = '{}/annotations/instances_{}.json'.format(dataDir, dataType)
+annFile = os.path.join(dataDir, 'annotations', 'instances_{}.json'.format(dataType))
 
 coco = COCO(annFile)
 
@@ -20,22 +21,27 @@ print('COCO categories: \n{}\n'.format(' '.join(nms)))
 nms = set([cat['supercategory'] for cat in cats])
 print('COCO supercategories: \n{}'.format(' '.join(nms)))
 
-# get all images containing given categories, select one at random
-catIds = coco.getCatIds(catNms=['bicycle','car','motorcycle'])
+# get all images containing given categories
+catIds = coco.getCatIds(catNms=['bicycle','motorcycle'])
 imgIds = coco.getImgIds(catIds=catIds )
-# imgIds = coco.getImgIds(imgIds = [55809])
-img = coco.loadImgs(imgIds[np.random.randint(0,len(imgIds))])[0]
+imgs = coco.loadImgs(imgIds)
+# img = coco.loadImgs(imgIds[np.random.randint(0,len(imgIds))])[0]
 
-image_name = img['file_name']
+# make target directories
+dst_dir = os.path.join(dataDir, 'yolof', dataType)
+if not os.path.exists(dst_dir):
+    os.makedirs(dst_dir)
 
-# load and display image
-I = io.imread('%s/%s/%s'%(dataDir,dataType,img['file_name']))
-# use url to load image
-# I = io.imread(img['coco_url'])
-plt.imshow(I)
-plt.axis('off')
-# plt.show()
-annIds = coco.getAnnIds(imgIds=img['id'], catIds=[], iscrowd=None)
-anns = coco.loadAnns(annIds)
-coco.showAnns(anns, True)
-plt.show()
+# determine system command for copying files
+if os.name == 'nt':
+    copy_cmd = 'COPY {} {}'
+else:
+    copy_cmd = 'cp {} {}'
+
+for i in range(len(imgs)):
+    img = imgs[i]
+    file_name = os.path.join(dataDir, dataType, imgs[i]['file_name'])
+    dst_file = os.path.join(dst_dir, '{:0>5d}.jpg'.format(i+1))
+    # print(copy_cmd.format(file_name, dst_file))
+    os.system(copy_cmd.format(file_name, dst_file))
+    
