@@ -4,8 +4,9 @@ import skimage.io as io
 import matplotlib.pyplot as plt
 import pylab
 import cv2 as cv
+import os
 
-dataDir = '/home/vip/Dataset/coco/2017'
+dataDir = os.environ['COCO2017']
 dataType = 'train2017'
 annFile = '{}/annotations/instances_{}.json'.format(dataDir, dataType)
 
