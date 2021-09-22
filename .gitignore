@@ -16,3 +16,10 @@ build
 
 # images
 test_result.png
+
+# training files
+train
+val
+train.txt
+val.txt
+*.names
