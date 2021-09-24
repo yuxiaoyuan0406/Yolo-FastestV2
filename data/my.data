@@ -2,7 +2,7 @@
 model_name=cam-101
 
 [train-configure]
-epochs=300
+epochs=3000
 steps=150,250
 batch_size=64
 subdivisions=1
