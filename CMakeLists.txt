@@ -2,7 +2,15 @@ cmake_minimum_required(VERSION 3.2)
 
 project(yolof)
 
-set(CMAKE_PREFIX_PATH /home/vip/archiconda3/envs/yolof/lib/python3.6/site-packages/torch/share/cmake)
+set(LIBTORCH_PREFIX_PATH variable)
+message(STATUS "Running command: ")
+message(STATUS "    python -c \'import torch;print(torch.utils.cmake_prefix_path)\'")
+execute_process(COMMAND python "-c" "\'import torch;print(torch.utils.cmake_prefix_path)\'"
+    OUTPUT_VARIABLE LIBTORCH_PREFIX_PATH)
+message(STATUS "Output: ")
+message(STATUS "    ${LIBTORCH_PREFIX_PATH}")
+
+set(CMAKE_PREFIX_PATH ${LIBTORCH_PREFIX_PATH})
 set(CMAKE_INSTALL_PREFIX /usr/local)
 set(CMAKE_BUILD_TYPE Release)
 set(OPENCV_EXTRA_MODULES_PATH /home/vip/opencv_contrib/modules)
