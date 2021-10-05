@@ -9,4 +9,9 @@ if __name__ == '__main__':
     session = fo.launch_app(dataset=dataset, port=5151)
 
     while True:
-        pass
+        try:
+            pass
+        except KeyboardInterrupt as e:
+            print(e)
+            session.close()
+            break
