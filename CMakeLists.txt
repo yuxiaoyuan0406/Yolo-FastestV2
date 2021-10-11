@@ -5,8 +5,10 @@ project(yolof)
 set(LIBTORCH_PREFIX_PATH variable)
 message(STATUS "Running command: ")
 message(STATUS "    python -c \'import torch;print(torch.utils.cmake_prefix_path)\'")
-execute_process(COMMAND python "-c" "\'import torch;print(torch.utils.cmake_prefix_path)\'"
-    OUTPUT_VARIABLE LIBTORCH_PREFIX_PATH)
+execute_process(COMMAND sh get_libtorch.sh
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE LIBTORCH_PREFIX_PATH
+    )
 message(STATUS "Output: ")
 message(STATUS "    ${LIBTORCH_PREFIX_PATH}")
 
