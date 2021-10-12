@@ -7,9 +7,18 @@ import torch
 import model.detector
 
 import sys
-sys.path.append('..')
 import utils.utils
 
+import json
+import cv2
+
+def cam_pipline(settings: dict):
+    return "rtsp://{}:{}@{}:{}/Streaming/Channels/{}".format(
+        settings['user'], 
+        settings['password'], 
+        settings['ip'], 
+        settings['port'],
+        settings['channel'])
 
 def gstreamer_pipeline(
     capture_width=1280,
@@ -46,6 +55,9 @@ if __name__ == '__main__':
     parser.add_argument('--weights', type=str, default='', 
                         help='The path of the .pth model to be transformed')
 
+    with open('cam.json', 'r') as load_file:
+        cam_settings = json.load(load_file)
+
     opt = parser.parse_args()
     cfg = utils.utils.load_datafile(opt.data)
     assert os.path.exists(opt.weights), "请指定正确的模型路径"
@@ -59,8 +71,7 @@ if __name__ == '__main__':
     model.eval()
     
     # load camera
-    #print(gstreamer_pipeline(flip_method=0))
-    cam = cv2.VideoCapture("rtsp://admin:ligonglou616@169.254.129.254:554/Streaming/Channels/2")
+    cam = cv2.VideoCapture(cam_pipline(cam_settings))
     assert cam.isOpened() is True, 'Camera open failed. '
 
     while True:

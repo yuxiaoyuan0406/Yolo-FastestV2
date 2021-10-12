@@ -27,3 +27,6 @@ val.txt
 # CCTV
 *.dll
 HCNetSDKCom
+
+# secret files
+cam.json
