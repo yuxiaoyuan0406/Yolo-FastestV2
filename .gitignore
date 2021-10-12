@@ -23,3 +23,7 @@ val
 train.txt
 val.txt
 *.names
+
+# CCTV
+*.dll
+HCNetSDKCom

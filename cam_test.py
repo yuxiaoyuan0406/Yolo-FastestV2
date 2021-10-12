@@ -5,7 +5,11 @@ import argparse
 
 import torch
 import model.detector
+
+import sys
+sys.path.append('..')
 import utils.utils
+
 
 def gstreamer_pipeline(
     capture_width=1280,
@@ -49,20 +53,20 @@ if __name__ == '__main__':
     #模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device)
-    model.load_state_dict(torch.load(opt.weights))
+    model.load_state_dict(torch.load(opt.weights,map_location='cpu'))
 
     #sets the module in eval node
     model.eval()
     
     # load camera
-    print(gstreamer_pipeline(flip_method=0))
-    cam = cv2.VideoCapture(gstreamer_pipeline(flip_method=0), cv2.CAP_GSTREAMER)
+    #print(gstreamer_pipeline(flip_method=0))
+    cam = cv2.VideoCapture("rtsp://admin:ligonglou616@169.254.129.254:554/Streaming/Channels/2")
     assert cam.isOpened() is True, 'Camera open failed. '
 
     while True:
         #数据预处理
         retVal, ori_img = cam.read()
-        res_img = cv2.resize(ori_img, (cfg["width"], cfg["height"]), interpolation = cv2.INTER_LINEAR) 
+        res_img = cv2.resize(ori_img, (cfg["width"], cfg["height"]), interpolation= cv2.INTER_LINEAR)
         img = res_img.reshape(1, cfg["height"], cfg["width"], 3)
         img = torch.from_numpy(img.transpose(0,3, 1, 2))
         img = img.to(device).float() / 255.0
