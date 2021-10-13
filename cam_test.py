@@ -72,18 +72,30 @@ if __name__ == '__main__':
     
     # load camera
     cam = cv2.VideoCapture(cam_pipline(cam_settings))
-    assert cam.isOpened() is True, 'Camera open failed. '
+    assert cam.isOpened() is True, '[{}]: Camera open failed. '.format(
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
+    print('[{}]: Loop begins. '.format(
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     while True:
-        #数据预处理
+        start = time.perf_counter()
+        # read image
+        for i in range(12):
+            '''
+            After the cctv camera is opened, all the frames which captured is stored in 
+            the buffer in the camera. To catch up with the camera, dump a few frames here. 
+            '''
+            _, __ = cam.read()
         retVal, ori_img = cam.read()
+        assert ori_img is not None, '[{}]: Camera read failed. '.format(
+            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+        #数据预处理
         res_img = cv2.resize(ori_img, (cfg["width"], cfg["height"]), interpolation= cv2.INTER_LINEAR)
         img = res_img.reshape(1, cfg["height"], cfg["width"], 3)
         img = torch.from_numpy(img.transpose(0,3, 1, 2))
         img = img.to(device).float() / 255.0
 
         #模型推理
-        start = time.perf_counter()
         preds = model(img)
         # end = time.perf_counter()
         # _time = (end - start) * 1000.
