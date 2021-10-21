@@ -1,0 +1,22 @@
+[name]
+model_name=fiftyone-open
+
+[train-configure]
+epochs=300
+steps=150,250
+batch_size=64
+subdivisions=1
+learning_rate=0.001
+
+[model-configure]
+pre_weights=None
+classes=601
+width=352
+height=352
+anchor_num=3
+anchors=10.40,19.71, 29.15,52.37, 47.12,114.28, 102.92,94.68, 117.62,200.32, 283.24,257.66
+
+[data-configure]
+train=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/train.txt
+val=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/val.txt
+names=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/obj.names
