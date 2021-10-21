@@ -19,4 +19,4 @@ anchors=10.40,19.71, 29.15,52.37, 47.12,114.28, 102.92,94.68, 117.62,200.32, 283
 [data-configure]
 train=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/train.txt
 val=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/val.txt
-names=/home/songwei/dennis/fiftyone/open-images-v6/yolov4/obj.names
+names=./data/obj.names
