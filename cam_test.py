@@ -47,6 +47,15 @@ def gstreamer_pipeline(
         )
     )
 
+def model_loader(config: dict, weights: str, device: torch.device):
+    #模型加载
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    m = model.detector.Detector(config["classes"], config["anchor_num"], True).to(device)
+    m.load_state_dict(torch.load(weights,map_location='cpu'))
+    #sets the module in eval node
+    m.eval()
+    return m
+
 if __name__ == '__main__':
     #指定训练配置文件
     parser = argparse.ArgumentParser()
@@ -62,14 +71,15 @@ if __name__ == '__main__':
     cfg = utils.utils.load_datafile(opt.data)
     assert os.path.exists(opt.weights), "请指定正确的模型路径"
 
-    #模型加载
+    # #模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device)
-    model.load_state_dict(torch.load(opt.weights,map_location='cpu'))
+    # model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device)
+    # model.load_state_dict(torch.load(opt.weights,map_location='cpu'))
 
-    #sets the module in eval node
-    model.eval()
-    
+    # #sets the module in eval node
+    # model.eval()
+    my_model = model_loader(cfg, opt.weights, device)
+
     # load camera
     cam = cv2.VideoCapture(cam_pipline(cam_settings))
     assert cam.isOpened() is True, '[{}]: Camera open failed. '.format(
@@ -96,7 +106,7 @@ if __name__ == '__main__':
         img = img.to(device).float() / 255.0
 
         #模型推理
-        preds = model(img)
+        preds = my_model(img)
         # end = time.perf_counter()
         # _time = (end - start) * 1000.
         # print("forward time:%fms"%_time)
