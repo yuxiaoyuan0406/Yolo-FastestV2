@@ -54,44 +54,60 @@ def cam_pipline(settings: dict):
 
 # see: https://stackoverflow.com/questions/47396372/write-opencv-frames-into-gstreamer-rtsp-server-pipeline?rq=1
 class SensorFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, cap, model, config, **properties):
+    def __init__(self, cap, model_weights, config, device, **properties):
         super(SensorFactory, self).__init__(**properties)
-        self.cap = cap
-        self.model = model
+        self.cap = cv2.VideoCapture(cap)
         self.config = config
+        self.model = model_loader(self.config, model_weights, device)
         self.number_frames = 0
-        self.fps = 2
+        self.fps = 30
         self.duration = 1 / self.fps * Gst.SECOND  # duration of a frame in nanoseconds
         self.launch_string = 'appsrc name=source is-live=true block=true format=GST_FORMAT_TIME ' \
                              'caps=video/x-raw,format=BGR,width=640,height=360,framerate={}/1 ' \
                              '! videoconvert ! video/x-raw,format=I420 ' \
                              '! x264enc speed-preset=ultrafast tune=zerolatency ' \
                              '! rtph264pay config-interval=1 name=pay0 pt=96'.format(self.fps)
+        
+        ret, frame = self.cap.read()
+        if ret:
+            self.out = img_process(
+                ori_img=frame, 
+                mod=self.model, 
+                config=self.config, 
+                device=torch.device('cuda')
+            )
 
     def on_need_data(self, src, lenght):
-        if self.cap.isOpened():
-            skip_image(self.cap, 12)
-            ret, frame = self.cap.read()
-            if ret:
-                data = img_process(
-                    ori_img=frame, 
-                    mod=self.model, 
-                    config=self.config, 
-                    device=torch.device('cuda')
-                ).tostring()
-                buf = Gst.Buffer.new_allocate(None, len(data), None)
-                buf.fill(0, data)
-                buf.duration = self.duration
-                timestamp = self.number_frames * self.duration
-                buf.pts = buf.dts = int(timestamp)
-                buf.offset = timestamp
-                self.number_frames += 1
-                retval = src.emit('push-buffer', buf)
-                print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
-                                                                                       self.duration,
-                                                                                       self.duration / Gst.SECOND))
-                if retval != Gst.FlowReturn.OK:
-                    print(retval)
+        # ret, frame = self.cap.read()
+        ret = self.cap.grab()
+        # self.number_frames += 1
+        if not ret:
+            return None
+        
+        if (self.number_frames % 10) == 0:
+            ret, frame = self.cap.retrieve()
+            self.out = img_process(
+                ori_img=frame, 
+                mod=self.model, 
+                config=self.config, 
+                device=torch.device('cuda')
+            )
+
+        data = self.out.tostring()
+        buf = Gst.Buffer.new_allocate(None, len(data), None)
+        buf.fill(0, data)
+        buf.duration = self.duration
+        
+        timestamp = self.number_frames * self.duration
+        buf.pts = buf.dts = int(timestamp)
+        buf.offset = timestamp
+        self.number_frames += 1
+        retval = src.emit('push-buffer', buf)
+        print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
+                                                                                self.duration,
+                                                                                self.duration / Gst.SECOND))
+        if retval != Gst.FlowReturn.OK:
+            print(retval)
 
     def do_create_element(self, url):
         return Gst.parse_launch(self.launch_string)
@@ -103,9 +119,9 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
 
 
 class GstServer(GstRtspServer.RTSPServer):
-    def __init__(self, cap, model, config, **properties):
+    def __init__(self, cap, model_weights, device, config, **properties):
         super(GstServer, self).__init__(**properties)
-        self.factory = SensorFactory(cap=cap, model=model, config=config)
+        self.factory = SensorFactory(cap=cap, model_weights=model_weights, device=device, config=config)
         self.factory.set_shared(True)
         self.get_mount_points().add_factory("/test", self.factory)
         self.attach(None)
@@ -183,21 +199,23 @@ if __name__ == '__main__':
 
     # #模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    my_model = model_loader(cfg, opt.weights, device)
+    # my_model = model_loader(cfg, opt.weights, device)
 
     # load camera
-    cam = cv2.VideoCapture(cam_pipline(cam_settings))
-    assert cam.isOpened() is True, '[{}]: Camera open failed. '.format(
-        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+    # cam = cv2.VideoCapture(cam_pipline(cam_settings))
+    # assert cam.isOpened() is True, '[{}]: Camera open failed. '.format(
+    #     time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 
     # start server
     GObject.threads_init()
     Gst.init(None)
-    server = GstServer(cap=cam, model=my_model, config=cfg)
+    server = GstServer(cap=cam_pipline(cam_settings), model_weights=opt.weights, device=device, config=cfg)
     loop = GObject.MainLoop()
     print('[{}]: Loop begins. '.format(
         time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
     loop.run()
+
+    """
 
     while True:
         start = time.perf_counter()
@@ -221,3 +239,4 @@ if __name__ == '__main__':
 
     cv2.destroyAllWindows()
     cam.release()
+    """
