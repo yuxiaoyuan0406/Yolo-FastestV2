@@ -54,8 +54,9 @@ def cam_pipline(settings: dict):
 
 # see: https://stackoverflow.com/questions/47396372/write-opencv-frames-into-gstreamer-rtsp-server-pipeline?rq=1
 class SensorFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, cap, model_weights, config, device, **properties):
+    def __init__(self, cap: str, model_weights, config, device, **properties):
         super(SensorFactory, self).__init__(**properties)
+        self.cam_url = cap
         self.cap = cv2.VideoCapture(cap)
         self.config = config
         self.model = model_loader(self.config, model_weights, device)
@@ -82,9 +83,11 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
         ret = self.cap.grab()
         # self.number_frames += 1
         if not ret:
+            self.cap.release()
+            self.cap.open(self.cam_url)
             return None
         
-        if (self.number_frames % 10) == 0:
+        if (self.number_frames % 4) == 0:
             ret, frame = self.cap.retrieve()
             self.out = img_process(
                 ori_img=frame, 
@@ -119,7 +122,7 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
 
 
 class GstServer(GstRtspServer.RTSPServer):
-    def __init__(self, cap, model_weights, device, config, **properties):
+    def __init__(self, cap: str, model_weights, device, config, **properties):
         super(GstServer, self).__init__(**properties)
         self.factory = SensorFactory(cap=cap, model_weights=model_weights, device=device, config=config)
         self.factory.set_shared(True)
@@ -167,15 +170,16 @@ def img_process(ori_img, mod, config, device):
         box = box.tolist()
     
         obj_score = box[4]
-        category = LABEL_NAMES[int(box[5])]
+        if obj_score >= 0.5:
+            category = LABEL_NAMES[int(box[5])]
 
-        x1, y1 = int(box[0] * scale_w), int(box[1] * scale_h)
-        x2, y2 = int(box[2] * scale_w), int(box[3] * scale_h)
+            x1, y1 = int(box[0] * scale_w), int(box[1] * scale_h)
+            x2, y2 = int(box[2] * scale_w), int(box[3] * scale_h)
 
-        cv2.rectangle(ori_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
-        cv2.putText(ori_img, '%.2f' % obj_score, (x1, y1 - 5), 0, 0.7, (0, 255, 0), 2)	
-        cv2.putText(ori_img, category, (x1, y1 - 25), 0, 0.7, (0, 255, 0), 2)
-    
+            cv2.rectangle(ori_img, (x1, y1), (x2, y2), (255, 255, 0), 2)
+            cv2.putText(ori_img, '%.2f' % obj_score, (x1, y1 - 5), 0, 0.7, (0, 255, 0), 2)	
+            cv2.putText(ori_img, category, (x1, y1 - 25), 0, 0.7, (0, 255, 0), 2)
+        
     return ori_img
 
 def skip_image(capture, count):
