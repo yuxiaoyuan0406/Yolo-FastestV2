@@ -87,7 +87,7 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
             self.cap.open(self.cam_url)
             return None
         
-        if (self.number_frames % 4) == 0:
+        if (self.number_frames % 3) == 0:
             ret, frame = self.cap.retrieve()
             self.out = img_process(
                 ori_img=frame, 
@@ -106,9 +106,9 @@ class SensorFactory(GstRtspServer.RTSPMediaFactory):
         buf.offset = timestamp
         self.number_frames += 1
         retval = src.emit('push-buffer', buf)
-        print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
-                                                                                self.duration,
-                                                                                self.duration / Gst.SECOND))
+        # print('pushed buffer, frame {}, duration {} ns, durations {} s'.format(self.number_frames,
+        #                                                                         self.duration,
+        #                                                                         self.duration / Gst.SECOND))
         if retval != Gst.FlowReturn.OK:
             print(retval)
 
@@ -145,9 +145,9 @@ def img_process(ori_img, mod, config, device):
     img = img.to(device).float() / 255.0
 
     #模型推理
-    print('forward')
+    # print('forward')
     preds = mod(img)
-    print('end forward')
+    # print('end forward')
     # end = time.perf_counter()
     # _time = (end - start) * 1000.
     # print("forward time:%fms"%_time)
@@ -170,7 +170,7 @@ def img_process(ori_img, mod, config, device):
         box = box.tolist()
     
         obj_score = box[4]
-        if obj_score >= 0.5:
+        if obj_score >= 0.6:
             category = LABEL_NAMES[int(box[5])]
 
             x1, y1 = int(box[0] * scale_w), int(box[1] * scale_h)
