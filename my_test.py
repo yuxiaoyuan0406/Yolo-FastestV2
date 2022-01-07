@@ -24,12 +24,12 @@ if __name__ == '__main__':
 
     #模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device)
+    model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device).half() # using float16
     model.load_state_dict(torch.load(opt.weights))
 
     #sets the module in eval node
     model.eval()
-    
+
     #数据预处理
     images = ['img/000004.jpg',  'img/000139.jpg',  'img/000148.jpg',  'img/000181.jpg', 'img/000230.jpg']
     for image in images:
@@ -38,10 +38,11 @@ if __name__ == '__main__':
         img = res_img.reshape(1, cfg["height"], cfg["width"], 3)
         img = torch.from_numpy(img.transpose(0,3, 1, 2))
         img = img.to(device).float() / 255.0
+        img_half = img.half()
 
         #模型推理
         start = time.perf_counter()
-        preds = model(img)
+        preds = model(img_half)
         end = time.perf_counter()
         _time = (end - start) * 1000.
         print("forward time:%fms"%_time)
