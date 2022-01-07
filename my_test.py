@@ -24,7 +24,8 @@ if __name__ == '__main__':
 
     #模型加载
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).to(device).half() # using float16
+    model = model.detector.Detector(cfg["classes"], cfg["anchor_num"], True).half() # using float16
+    model.to(device)
     model.load_state_dict(torch.load(opt.weights))
 
     #sets the module in eval node
@@ -37,8 +38,8 @@ if __name__ == '__main__':
         res_img = cv2.resize(ori_img, (cfg["width"], cfg["height"]), interpolation = cv2.INTER_LINEAR) 
         img = res_img.reshape(1, cfg["height"], cfg["width"], 3)
         img = torch.from_numpy(img.transpose(0,3, 1, 2))
-        img = img.to(device).float() / 255.0
-        img_half = img.half()
+        img = img.float() / 255.0
+        img_half = img.half().to(device)
 
         #模型推理
         start = time.perf_counter()
