@@ -1,6 +1,6 @@
 # :zap:Yolo-FastestV2:zap:[![DOI](https://zenodo.org/badge/386585431.svg)](https://zenodo.org/badge/latestdoi/386585431)
 
-![image](https://github.com/dog-qiuqiu/Yolo-FastestV2/blob/main/img/demo.png)
+![image](./img/demo.png)
 
 * ***Simple, fast, compact, easy to transplant***
 * ***Less resource occupation, excellent single-core performance, lower power consumption***
@@ -49,7 +49,7 @@ Network|COCO mAP(0.5)|Resolution|Run Time(4xCore)|Run Time(1xCore)|FLOPs(G)|Para
   ```
 
 <div align=center>
-<img src="https://github.com/dog-qiuqiu/Yolo-FastestV2/blob/main/img/000139_result.png">
+<img src="./img/000139_result.png">
 </div>
 
 ## How to train
